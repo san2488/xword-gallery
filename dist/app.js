@@ -151,6 +151,8 @@ const loader = new IntersectionObserver(entries => {
   requestAnimationFrame(() => {
     appendMonth(previousMonth(oldestMonth));
     loading = false;
+    loader.unobserve(sentinel);
+    loader.observe(sentinel);
   });
 }, { rootMargin: '250px' });
 resetToMonth(currentMonth);
