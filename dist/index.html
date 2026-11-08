@@ -4,37 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f5ee">
-  <meta name="description" content="A date gallery for the Seattle Times Modern Midi Crossword.">
-  <title>Modern Midi Gallery</title>
+  <meta name="description" content="A date gallery for Seattle Times Mini and Modern Midi crosswords.">
+  <title>Crossword Gallery</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">M<span>·</span></span><span>Modern Midi <b>Gallery</b></span></div>
-      <a class="publisher-link" href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Seattle Times archive <span aria-hidden="true">↗</span></a>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">C<span>·</span></span><span>Crossword <b>Gallery</b></span></div>
+      <a class="publisher-link" id="publisher-link" href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Seattle Times archive <span aria-hidden="true">↗</span></a>
     </header>
 
     <main>
       <section class="intro">
         <div class="intro-copy">
           <p class="eyebrow">YOUR CROSSWORD INDEX</p>
-          <h1>Find a puzzle.<br><em>Pick a day.</em></h1>
-          <p class="lede">Browse Modern Midi crosswords by date, without pressing “Load more.” Choose a day to play it on The Seattle Times.</p>
-          <div class="intro-actions">
-            <button id="today-button" class="primary-button" type="button">Play latest <span aria-hidden="true">↗</span></button>
-            <button id="random-button" class="text-button" type="button">Surprise me <span aria-hidden="true">↗</span></button>
-          </div>
+          <h1>Pick a day. <em>Play a puzzle.</em></h1>
+          <p class="lede">Browse Seattle Times crosswords by date, without pressing “Load more.”</p>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="art-label">A LITTLE PUZZLE, EVERY DAY</div>
-          <div class="crossword-grid" id="hero-grid"></div>
-          <div class="art-caption"><span>01 / 07</span><span>TAKE A BREAK. FILL THE SQUARES.</span></div>
+        <div class="intro-actions">
+          <button id="today-button" class="primary-button" type="button">Play latest <span aria-hidden="true">↗</span></button>
+          <button id="random-button" class="text-button" type="button">Surprise me <span aria-hidden="true">↗</span></button>
         </div>
       </section>
 
       <section class="gallery-section" aria-labelledby="gallery-heading">
-        <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="gallery-heading">Browse by date</h2></div><p class="section-note">A direct path to the puzzle you choose.</p></div>
+        <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="gallery-heading">Browse by date</h2></div><p class="section-note">Choose a type, then a day.</p></div>
+        <div class="type-tabs" id="type-tabs" role="tablist" aria-label="Puzzle type"></div>
         <div class="toolbar">
           <div class="month-control">
             <button id="previous-month" class="icon-button" type="button" aria-label="Previous month">←</button>
@@ -49,10 +45,10 @@
         <div class="legend"><span><i class="legend-dot confirmed"></i> Seen in archive / shared link</span><span><i class="legend-dot inferred"></i> Date link inferred</span></div>
         <div id="gallery" class="gallery" aria-live="polite"></div>
         <p id="empty-state" class="empty-state" hidden>No matching days. Try another month or search.</p>
-        <div class="gallery-footer"><p>Older dates use the date pattern from a shared PuzzleMe link. The publisher may not have a puzzle on every date.</p><a href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Open the official archive ↗</a></div>
+        <div class="gallery-footer"><p>Dates use patterns from shared PuzzleMe links. The publisher may not have a puzzle on every date.</p><a id="archive-link" href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Open the official archive ↗</a></div>
       </section>
     </main>
-    <footer class="footer"><span>Modern Midi Gallery</span><span>An independent date browser. Puzzles open on The Seattle Times.</span></footer>
+    <footer class="footer"><span>Crossword Gallery</span><span>An independent date browser. Puzzles open on The Seattle Times.</span></footer>
   </div>
   <script src="./app.js" defer></script>
 </body>
