@@ -59,15 +59,13 @@ function datesFor(value) {
 }
 function card(date) {
   const completed = state.completed[selectedType].includes(date);
-  const visited = state.visited[selectedType].includes(date);
   const name = `${TYPES[selectedType].label} ${pretty(date)}`;
   return `<article class="puzzle-card ${completed ? 'completed' : ''}">
     <a class="card-link" href="${linkFor(date)}" target="_blank" rel="noopener noreferrer" data-open="${date}" aria-label="Play ${name} on The Seattle Times">
       <span class="card-number">${Number(date.slice(-2))}</span>
-      <span class="card-weekday">${weekday(date)}</span>
-      <span class="card-status">${completed ? 'Completed · Play ↗' : visited ? 'Opened · Play ↗' : 'Play ↗'}</span>
+      <span class="card-bottom"><span class="card-weekday">${weekday(date)}</span><span class="card-status">Play ↗</span></span>
     </a>
-    <button class="complete-button" type="button" data-complete="${date}" aria-label="${completed ? 'Mark' : 'Mark'} ${name} ${completed ? 'not complete' : 'complete'}" aria-pressed="${completed}" title="${completed ? 'Mark not complete' : 'Mark complete'}">✓</button>
+    <button class="complete-button" type="button" data-complete="${date}" aria-label="Mark ${name} ${completed ? 'not complete' : 'complete'}" aria-pressed="${completed}" title="${completed ? 'Mark not complete' : 'Mark complete'}">✓</button>
   </article>`;
 }
 function appendMonth(value) {
@@ -103,7 +101,6 @@ function chooseType(type) {
   const value = activeMonth();
   selectedType = type;
   for (const tab of document.querySelectorAll('.type-tab')) tab.setAttribute('aria-selected', String(tab.dataset.type === type));
-  document.querySelector('#publisher-link').href = TYPES[type].base;
   document.querySelector('#archive-link').href = TYPES[type].base;
   resetToMonth(value, true);
 }

@@ -11,25 +11,19 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">C<span>·</span></span><span>Crossword <b>Gallery</b></span></div>
-      <a class="publisher-link" id="publisher-link" href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Seattle Times archive <span aria-hidden="true">↗</span></a>
+      <h1 class="brand">Crossword Gallery</h1>
+      <div class="header-actions">
+        <button id="today-button" class="primary-button" type="button">Play latest <span aria-hidden="true">↗</span></button>
+        <button id="random-button" class="text-button" type="button">Surprise me <span aria-hidden="true">↗</span></button>
+      </div>
     </header>
 
     <main>
-      <section class="intro" aria-label="Quick play">
-        <h1>Pick a day.</h1>
-        <div class="intro-actions">
-          <button id="today-button" class="primary-button" type="button">Play latest <span aria-hidden="true">↗</span></button>
-          <button id="random-button" class="text-button" type="button">Surprise me <span aria-hidden="true">↗</span></button>
-        </div>
-      </section>
-
       <section class="gallery-section" aria-label="Puzzle gallery">
         <div class="type-tabs" id="type-tabs" role="tablist" aria-label="Puzzle type"></div>
         <div class="jump-bar">
           <label for="month-picker">Jump to month</label>
           <input id="month-picker" type="month">
-          <span class="completion-hint">Tap ✓ to mark a puzzle complete on this device.</span>
         </div>
         <div id="gallery" class="gallery" aria-live="polite"></div>
         <div id="load-sentinel" class="load-sentinel" aria-live="polite">Scroll for older puzzles</div>
