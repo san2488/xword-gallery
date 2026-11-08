@@ -157,3 +157,9 @@ const loader = new IntersectionObserver(entries => {
 }, { rootMargin: '250px' });
 resetToMonth(currentMonth);
 loader.observe(sentinel);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Offline support unavailable:', error));
+  });
+}
