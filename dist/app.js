@@ -1,39 +1,41 @@
 const TYPES = {
-  midi: { label: 'Modern Midi', icon: '▦', base: 'https://www.seattletimes.com/games-crossword-midi-modern/', prefix: 'seattletimes-pop-midi-', set: 'seattletimes-contemporary-midi-crossword', confirmed: date => (date >= '2026-10-18' && date <= '2026-10-24') || date === '2026-11-07' },
-  mini: { label: 'Mini', icon: '▥', base: 'https://www.seattletimes.com/games-crossword-mini/', prefix: 'seattle-crossword-mini-', set: 'seattletimes-crossword-mini', confirmed: date => date === '2026-11-07' }
+  midi: { label: 'Modern Midi', icon: '▦', base: 'https://www.seattletimes.com/games-crossword-midi-modern/', prefix: 'seattletimes-pop-midi-', set: 'seattletimes-contemporary-midi-crossword' },
+  mini: { label: 'Mini', icon: '▥', base: 'https://www.seattletimes.com/games-crossword-mini/', prefix: 'seattle-crossword-mini-', set: 'seattletimes-crossword-mini' }
 };
-const STORAGE_KEY = 'crossword-gallery:v2';
+const STORAGE_KEY = 'crossword-gallery:v3';
 const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
 const now = Object.fromEntries(parts.map(part => [part.type, part.value]));
 const today = `${now.year}-${now.month}-${now.day}`;
+const currentMonth = today.slice(0, 7);
 const state = loadState();
-let selectedType = 'midi';
-let month = today.slice(0, 7);
-let savedOnly = false;
 const gallery = document.querySelector('#gallery');
 const monthPicker = document.querySelector('#month-picker');
-const dateSearch = document.querySelector('#date-search');
-const savedCount = document.querySelector('#saved-count');
-const savedFilter = document.querySelector('#saved-filter');
-monthPicker.max = today.slice(0, 7);
+const sentinel = document.querySelector('#load-sentinel');
+let selectedType = 'midi';
+let oldestMonth = currentMonth;
+let loading = false;
+monthPicker.max = currentMonth;
+monthPicker.value = currentMonth;
 document.querySelector('#type-tabs').innerHTML = Object.entries(TYPES).map(([key, type]) => `<button class="type-tab" id="tab-${key}" type="button" role="tab" aria-selected="${key === selectedType}" aria-controls="gallery" data-type="${key}"><span class="tab-icon" aria-hidden="true">${type.icon}</span> ${type.label}</button>`).join('');
 
+function emptyByType() { return Object.fromEntries(Object.keys(TYPES).map(type => [type, []])); }
 function loadState() {
-  const emptyByType = () => Object.fromEntries(Object.keys(TYPES).map(type => [type, []]));
-  const result = { saved: emptyByType(), visited: emptyByType() };
+  const result = { visited: emptyByType(), completed: emptyByType() };
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored) {
-      for (const kind of ['saved', 'visited']) for (const type of Object.keys(TYPES))
-        result[kind][type] = Array.isArray(stored[kind]?.[type]) ? stored[kind][type] : [];
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved) {
+      for (const kind of ['visited', 'completed']) for (const type of Object.keys(TYPES))
+        result[kind][type] = Array.isArray(saved[kind]?.[type]) ? saved[kind][type] : [];
       return result;
     }
-    const older = JSON.parse(localStorage.getItem('modern-midi-gallery:v1'));
-    if (older) {
-      result.saved.midi = Array.isArray(older.saved) ? older.saved : [];
-      result.visited.midi = Array.isArray(older.visited) ? older.visited : [];
+    const old = JSON.parse(localStorage.getItem('crossword-gallery:v2'));
+    if (old) for (const type of Object.keys(TYPES))
+      result.visited[type] = Array.isArray(old.visited?.[type]) ? old.visited[type] : [];
+    else {
+      const first = JSON.parse(localStorage.getItem('modern-midi-gallery:v1'));
+      if (first && Array.isArray(first.visited)) result.visited.midi = first.visited;
     }
-  } catch { /* Ignore malformed local storage. */ }
+  } catch { /* Ignore malformed local state. */ }
   return result;
 }
 function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -42,62 +44,89 @@ function linkFor(date, type = selectedType) {
   const params = new URLSearchParams({ id: puzzle.prefix + date.replaceAll('-', ''), set: puzzle.set, puzzleType: 'crossword' });
   return `${puzzle.base}?${params}`;
 }
-function daysInMonth(value) {
-  const [year, monthNumber] = value.split('-').map(Number);
-  const count = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+function pretty(date) { return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`)); }
+function monthName(value) { return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}-01T12:00:00Z`)); }
+function weekday(date) { return new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`)); }
+function previousMonth(value) {
+  const [year, number] = value.split('-').map(Number);
+  const previous = new Date(Date.UTC(year, number - 2, 1));
+  return `${previous.getUTCFullYear()}-${String(previous.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+function datesFor(value) {
+  const [year, number] = value.split('-').map(Number);
+  const count = new Date(Date.UTC(year, number, 0)).getUTCDate();
   return Array.from({ length: count }, (_, index) => `${value}-${String(index + 1).padStart(2, '0')}`).reverse().filter(date => date <= today);
 }
-function pretty(date) { return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`)); }
-function weekday(date) { return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`)); }
-function smallGrid(date) {
-  const seed = Number(date.replaceAll('-', ''));
-  return Array.from({ length: 25 }, (_, i) => `<i class="${((i * 13 + seed) % 9 < 2 && i !== 12) ? 'block' : ''}"></i>`).join('');
-}
 function card(date) {
-  const saved = state.saved[selectedType].includes(date);
+  const completed = state.completed[selectedType].includes(date);
   const visited = state.visited[selectedType].includes(date);
-  const confirmed = TYPES[selectedType].confirmed(date);
-  return `<article class="puzzle-card ${confirmed ? 'confirmed' : ''} ${visited ? 'visited' : ''}" data-date="${date}">
-    <div class="card-top"><div class="mini-grid" aria-hidden="true">${smallGrid(date)}</div><button class="save-button ${saved ? 'active' : ''}" type="button" data-save="${date}" aria-label="${saved ? 'Remove' : 'Save'} ${TYPES[selectedType].label} ${pretty(date)}" aria-pressed="${saved}">${saved ? '★' : '☆'}</button></div>
-    <div class="card-meta"><p class="card-date">${new Date(`${date}T12:00:00Z`).getUTCDate()} <span class="sr-only">${pretty(date)}</span></p><div class="card-weekday">${weekday(date)}</div></div>
-    <div class="card-bottom"><span class="status">${visited ? 'Opened' : confirmed ? 'Seen in archive' : 'Date link'}</span><a class="play-link" href="${linkFor(date)}" target="_blank" rel="noopener noreferrer" data-open="${date}" aria-label="Play ${TYPES[selectedType].label} ${pretty(date)} on The Seattle Times">Play ↗</a></div>
+  const name = `${TYPES[selectedType].label} ${pretty(date)}`;
+  return `<article class="puzzle-card ${completed ? 'completed' : ''}">
+    <a class="card-link" href="${linkFor(date)}" target="_blank" rel="noopener noreferrer" data-open="${date}" aria-label="Play ${name} on The Seattle Times">
+      <span class="card-number">${Number(date.slice(-2))}</span>
+      <span class="card-weekday">${weekday(date)}</span>
+      <span class="card-status">${completed ? 'Completed · Play ↗' : visited ? 'Opened · Play ↗' : 'Play ↗'}</span>
+    </a>
+    <button class="complete-button" type="button" data-complete="${date}" aria-label="${completed ? 'Mark' : 'Mark'} ${name} ${completed ? 'not complete' : 'complete'}" aria-pressed="${completed}" title="${completed ? 'Mark not complete' : 'Mark complete'}">✓</button>
   </article>`;
 }
-function render() {
-  const search = dateSearch.value.trim().toLowerCase();
-  const dates = daysInMonth(month).filter(date => (!savedOnly || state.saved[selectedType].includes(date)) && (!search || pretty(date).toLowerCase().includes(search) || weekday(date).toLowerCase().includes(search) || date.includes(search)));
-  gallery.innerHTML = dates.map(card).join('');
-  document.querySelector('#empty-state').hidden = dates.length > 0;
-  savedCount.textContent = state.saved[selectedType].length;
-  document.querySelector('#next-month').disabled = month >= today.slice(0, 7);
-  monthPicker.value = month;
-  document.querySelector('#publisher-link').href = TYPES[selectedType].base;
-  document.querySelector('#archive-link').href = TYPES[selectedType].base;
-  for (const tab of document.querySelectorAll('.type-tab')) tab.setAttribute('aria-selected', String(tab.dataset.type === selectedType));
+function appendMonth(value) {
+  const section = document.createElement('section');
+  section.className = 'month-section';
+  section.id = `month-${value}`;
+  section.setAttribute('aria-label', monthName(value));
+  section.innerHTML = `<h2 class="month-heading">${monthName(value)}</h2><div class="month-grid">${datesFor(value).map(card).join('')}</div>`;
+  gallery.append(section);
+  oldestMonth = value;
 }
-function changeMonth(delta) {
-  const [year, monthNumber] = month.split('-').map(Number);
-  const next = new Date(Date.UTC(year, monthNumber - 1 + delta, 1));
-  const value = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}`;
-  if (value <= today.slice(0, 7)) { month = value; render(); }
+function refreshCards() {
+  for (const section of gallery.querySelectorAll('.month-section')) {
+    const value = section.id.slice(6);
+    section.querySelector('.month-grid').innerHTML = datesFor(value).map(card).join('');
+  }
 }
-function chooseType(type) { if (TYPES[type]) { selectedType = type; render(); } }
+function activeMonth() {
+  let result = monthPicker.value || currentMonth;
+  for (const section of gallery.querySelectorAll('.month-section')) {
+    if (section.getBoundingClientRect().top < window.innerHeight * 0.5) result = section.id.slice(6);
+  }
+  return result;
+}
+function resetToMonth(value, scroll = false) {
+  gallery.replaceChildren();
+  appendMonth(value);
+  monthPicker.value = value;
+  if (scroll) requestAnimationFrame(() => document.querySelector(`#month-${value}`).scrollIntoView({ block: 'start' }));
+}
+function chooseType(type) {
+  if (!TYPES[type] || type === selectedType) return;
+  const value = activeMonth();
+  selectedType = type;
+  for (const tab of document.querySelectorAll('.type-tab')) tab.setAttribute('aria-selected', String(tab.dataset.type === type));
+  document.querySelector('#publisher-link').href = TYPES[type].base;
+  document.querySelector('#archive-link').href = TYPES[type].base;
+  resetToMonth(value, true);
+}
 function openDate(date) {
   if (!state.visited[selectedType].includes(date)) { state.visited[selectedType].push(date); persist(); }
   window.open(linkFor(date), '_blank', 'noopener,noreferrer');
-  render();
+  refreshCards();
 }
 gallery.addEventListener('click', event => {
-  const save = event.target.closest('[data-save]');
-  if (save) {
-    const date = save.dataset.save, items = state.saved[selectedType];
-    state.saved[selectedType] = items.includes(date) ? items.filter(item => item !== date) : [...items, date];
-    persist(); render(); return;
+  const complete = event.target.closest('[data-complete]');
+  if (complete) {
+    const date = complete.dataset.complete;
+    const items = state.completed[selectedType];
+    state.completed[selectedType] = items.includes(date) ? items.filter(item => item !== date) : [...items, date];
+    persist();
+    refreshCards();
+    return;
   }
   const open = event.target.closest('[data-open]');
   if (open && !state.visited[selectedType].includes(open.dataset.open)) {
     state.visited[selectedType].push(open.dataset.open);
-    persist(); setTimeout(render, 0);
+    persist();
+    requestAnimationFrame(refreshCards);
   }
 });
 document.querySelectorAll('.type-tab').forEach(tab => {
@@ -106,20 +135,26 @@ document.querySelectorAll('.type-tab').forEach(tab => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
     const keys = Object.keys(TYPES);
-    const offset = event.key === 'ArrowRight' ? 1 : -1;
-    const next = keys[(keys.indexOf(selectedType) + offset + keys.length) % keys.length];
+    const next = keys[(keys.indexOf(selectedType) + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) % keys.length];
     chooseType(next);
     document.querySelector(`#tab-${next}`).focus();
   });
 });
-document.querySelector('#previous-month').addEventListener('click', () => changeMonth(-1));
-document.querySelector('#next-month').addEventListener('click', () => changeMonth(1));
-monthPicker.addEventListener('change', () => { if (monthPicker.value) { month = monthPicker.value; render(); } });
-dateSearch.addEventListener('input', render);
-savedFilter.addEventListener('click', () => { savedOnly = !savedOnly; savedFilter.setAttribute('aria-pressed', String(savedOnly)); render(); });
+monthPicker.addEventListener('change', () => {
+  if (monthPicker.value && monthPicker.value <= currentMonth) resetToMonth(monthPicker.value, true);
+});
 document.querySelector('#today-button').addEventListener('click', () => openDate(today));
 document.querySelector('#random-button').addEventListener('click', () => {
-  const candidates = daysInMonth(month);
-  if (candidates.length) openDate(candidates[Math.floor(Math.random() * candidates.length)]);
+  const dates = datesFor(activeMonth());
+  if (dates.length) openDate(dates[Math.floor(Math.random() * dates.length)]);
 });
-render();
+const loader = new IntersectionObserver(entries => {
+  if (!entries[0].isIntersecting || loading) return;
+  loading = true;
+  requestAnimationFrame(() => {
+    appendMonth(previousMonth(oldestMonth));
+    loading = false;
+  });
+}, { rootMargin: '250px' });
+resetToMonth(currentMonth);
+loader.observe(sentinel);

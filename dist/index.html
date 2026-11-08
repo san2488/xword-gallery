@@ -16,35 +16,23 @@
     </header>
 
     <main>
-      <section class="intro">
-        <div class="intro-copy">
-          <p class="eyebrow">YOUR CROSSWORD INDEX</p>
-          <h1>Pick a day. <em>Play a puzzle.</em></h1>
-          <p class="lede">Browse Seattle Times crosswords by date, without pressing “Load more.”</p>
-        </div>
+      <section class="intro" aria-label="Quick play">
+        <h1>Pick a day.</h1>
         <div class="intro-actions">
           <button id="today-button" class="primary-button" type="button">Play latest <span aria-hidden="true">↗</span></button>
           <button id="random-button" class="text-button" type="button">Surprise me <span aria-hidden="true">↗</span></button>
         </div>
       </section>
 
-      <section class="gallery-section" aria-labelledby="gallery-heading">
-        <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="gallery-heading">Browse by date</h2></div><p class="section-note">Choose a type, then a day.</p></div>
+      <section class="gallery-section" aria-label="Puzzle gallery">
         <div class="type-tabs" id="type-tabs" role="tablist" aria-label="Puzzle type"></div>
-        <div class="toolbar">
-          <div class="month-control">
-            <button id="previous-month" class="icon-button" type="button" aria-label="Previous month">←</button>
-            <label class="month-label" for="month-picker"><span class="sr-only">Choose month</span><input id="month-picker" type="month"></label>
-            <button id="next-month" class="icon-button" type="button" aria-label="Next month">→</button>
-          </div>
-          <div class="toolbar-right">
-            <label class="search-field"><span aria-hidden="true">⌕</span><span class="sr-only">Filter this month</span><input id="date-search" type="search" placeholder="Filter this month…" autocomplete="off"></label>
-            <button id="saved-filter" class="filter-button" type="button" aria-pressed="false">☆ Saved <span id="saved-count">0</span></button>
-          </div>
+        <div class="jump-bar">
+          <label for="month-picker">Jump to month</label>
+          <input id="month-picker" type="month">
+          <span class="completion-hint">Tap ✓ to mark a puzzle complete on this device.</span>
         </div>
-        <div class="legend"><span><i class="legend-dot confirmed"></i> Seen in archive / shared link</span><span><i class="legend-dot inferred"></i> Date link inferred</span></div>
         <div id="gallery" class="gallery" aria-live="polite"></div>
-        <p id="empty-state" class="empty-state" hidden>No matching days. Try another month or search.</p>
+        <div id="load-sentinel" class="load-sentinel" aria-live="polite">Scroll for older puzzles</div>
         <div class="gallery-footer"><p>Dates use patterns from shared PuzzleMe links. The publisher may not have a puzzle on every date.</p><a id="archive-link" href="https://www.seattletimes.com/games-crossword-midi-modern/" target="_blank" rel="noopener noreferrer">Open the official archive ↗</a></div>
       </section>
     </main>
